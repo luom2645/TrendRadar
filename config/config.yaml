@@ -156,31 +156,39 @@ notification:
 
 # 用于让关注度更高的新闻在更前面显示，即用算法重新组合不同平台的热搜排序形成你侧重的热搜，合起来是 1 就行
 weight:
-  rank_weight: 0.6 # 排名权重
-  frequency_weight: 0.3 # 频次权重
-  hotness_weight: 0.1 # 热度权重
+  rank_weight: 0.5    # 看重排名（50%）
+  frequency_weight: 0.4  # 重视持续出现的重要话题（40%）
+  hotness_weight: 0.1   # 考虑热度质量（10%）
 
 # name 可以定义任意名称，只具有显示作用，即使项目运行了几天后，忽然改掉 name 也不会影响代码的正常运行
 platforms:
-  - id: "toutiao"
-    name: "今日头条"
-  - id: "baidu"
-    name: "百度热搜"
-  - id: "wallstreetcn-hot"
-    name: "华尔街见闻"
-  - id: "thepaper"
-    name: "澎湃新闻"
-  - id: "bilibili-hot-search"
-    name: "bilibili 热搜"
-  - id: "cls-hot"
-    name: "财联社热门"
-  - id: "ifeng"
-    name: "凤凰网"
-  - id: "tieba"
-    name: "贴吧"
-  - id: "weibo"
-    name: "微博"
-  - id: "douyin"
-    name: "抖音"
+  - id: "github-trending"
+    name: "GitHub Trending"  # 全球开源项目趋势
+  - id: "hackernews"
+    name: "Hacker News"      # 全球技术开发者社区
+  - id: "medium"
+    name: "Medium"           # 深度技术博客
+  - id: "techcrunch"
+    name: "TechCrunch"       # 硅谷科技媒体
+  - id: "reuters"
+    name: "路透社"           # 国际权威新闻
+  - id: "wallstreetcn-hot" 
+    name: "华尔街见闻"        # 全球经济和科技动态
+  - id: "caixin-hot"
+    name: "财新网"           # 深度财经报道
   - id: "zhihu"
-    name: "知乎"
+    name: "知乎"             # 深度讨论和专业见解
+  - id: "douyin"
+    name: "抖音"             # 短视频热点
+  - id: "bilibili"
+    name: "B站热搜"          # 年轻人关注的热点
+  - id: "toutiao"
+    name: "今日头条"          # 综合资讯聚合
+  - id: "weibo"
+    name: "微博"             # 实时热点和舆论
+  - id: "baidu"
+    name: "百度热搜"          # 大众关注度指标
+  - id: "pengpai"
+    name: "澎湃新闻"          # 深度新闻报道
+  - id: "fenghuang"
+    name: "凤凰网"           # 综合新闻资讯
