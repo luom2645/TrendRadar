@@ -58,6 +58,31 @@ SMTP_CONFIGS = {
 }
 
 
+def _build_feishu_payload(
+    webhook_url: str,
+    *,
+    batch_content: str,
+    report_type: str,
+    total_titles: int,
+    now: datetime,
+) -> Dict:
+    parsed_url = urlparse(webhook_url)
+    is_botbuilder_webhook = "flow/api/trigger-webhook" in (parsed_url.path or "")
+
+    if is_botbuilder_webhook:
+        return {
+            "message_type": "text",
+            "content": {
+                "total_titles": str(total_titles),
+                "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
+                "report_type": report_type,
+                "text": batch_content,
+            },
+        }
+
+    return {"msg_type": "text", "content": {"text": batch_content}}
+
+
 def send_to_feishu(
     webhook_url: str,
     report_data: Dict,
@@ -125,40 +150,47 @@ def send_to_feishu(
             len(stat["titles"]) for stat in report_data["stats"] if stat["count"] > 0
         )
         now = get_time_func() if get_time_func else datetime.now()
-
-        payload = {
-            "msg_type": "text",
-            "content": {
-                "total_titles": total_titles,
-                "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
-                "report_type": report_type,
-                "text": batch_content,
-            },
-        }
+        payload = _build_feishu_payload(
+            webhook_url,
+            batch_content=batch_content,
+            report_type=report_type,
+            total_titles=total_titles,
+            now=now,
+        )
 
         try:
             response = requests.post(
                 webhook_url, headers=headers, json=payload, proxies=proxies, timeout=30
             )
-            if response.status_code == 200:
-                result = response.json()
-                # 检查飞书的响应状态
-                if result.get("StatusCode") == 0 or result.get("code") == 0:
-                    print(f"{log_prefix}第 {i}/{len(batches)} 批次发送成功 [{report_type}]")
-                    # 批次间间隔
-                    if i < len(batches):
-                        time.sleep(batch_interval)
-                else:
-                    error_msg = result.get("msg") or result.get("StatusMessage", "未知错误")
-                    print(
-                        f"{log_prefix}第 {i}/{len(batches)} 批次发送失败 [{report_type}]，错误：{error_msg}"
-                    )
-                    return False
-            else:
+            if not response.ok:
                 print(
                     f"{log_prefix}第 {i}/{len(batches)} 批次发送失败 [{report_type}]，状态码：{response.status_code}"
                 )
                 return False
+
+            result = None
+            try:
+                result = response.json()
+            except Exception:
+                result = None
+
+            if isinstance(result, dict):
+                if result.get("StatusCode") == 0 or result.get("code") == 0:
+                    print(f"{log_prefix}第 {i}/{len(batches)} 批次发送成功 [{report_type}]")
+                    if i < len(batches):
+                        time.sleep(batch_interval)
+                    continue
+
+                if ("StatusCode" in result) or ("code" in result):
+                    error_msg = result.get("msg") or result.get("StatusMessage") or "未知错误"
+                    print(
+                        f"{log_prefix}第 {i}/{len(batches)} 批次发送失败 [{report_type}]，错误：{error_msg}"
+                    )
+                    return False
+
+            print(f"{log_prefix}第 {i}/{len(batches)} 批次发送成功 [{report_type}]")
+            if i < len(batches):
+                time.sleep(batch_interval)
         except Exception as e:
             print(f"{log_prefix}第 {i}/{len(batches)} 批次发送出错 [{report_type}]：{e}")
             return False
